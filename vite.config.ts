@@ -3,7 +3,6 @@
 import lessToJS from "less-vars-to-js";
 import { defineConfig } from "vite";
 import reactRefresh from "@vitejs/plugin-react-refresh";
-import vitePluginImp from "vite-plugin-imp";
 import { ViteAliases } from "vite-aliases";
 import Inspect from "vite-plugin-inspect";
 import reactJsx from "vite-react-jsx";
@@ -21,20 +20,7 @@ export default defineConfig({
     Inspect(),
     ViteAliases({}),
     reactJsx(),
-    reactRefresh(),
-    vitePluginImp({
-      libList: [
-        {
-          libName: "antd",
-          style: (name) => {
-            if (name === "col" || name === "row") {
-              return "antd/lib/style/index.less";
-            }
-            return `antd/es/${name}/style/index.less`;
-          },
-        },
-      ],
-    }),
+    reactRefresh()
   ],
   css: {
     preprocessorOptions: {

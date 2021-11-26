@@ -14,6 +14,15 @@ const themeVariables = lessToJS(
   fs.readFileSync(pathResolver("./config/variables.less"), "utf8")
 );
 
+const external = ['react', 'react-dom', 'echarts', 'nkxrb-tools', 'kidar-echarts-plugins']
+const globals = {
+  'echarts': 'echarts',
+  'react': 'React',
+  'react-dom': 'ReactDom',
+  'nkxrb-tools': 'NkxrbTools',
+  'kidar-echarts-plugins': 'KidarEchartsPlugins',
+}
+
 export default defineConfig({
   base: "./",
   plugins: [
@@ -30,4 +39,32 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    minify: true,
+    outDir: 'lib',
+    lib: {
+      entry: './src/index.tsx',
+      fileName: 'kidar-echarts-react',
+      name: 'KIDAR_ECHARTS'
+    },
+    rollupOptions: {
+      // 确保外部化处理那些你不想打包进库的依赖
+      external: external,
+      output: [
+        {
+          format: "es",
+          esModule: true,
+          exports: "named",
+          globals: globals
+        },
+        {
+          format: 'umd',
+          inlineDynamicImports: true,
+          interop: "esModule",
+          exports: "named",
+          globals: globals
+        }
+      ]
+    }
+  }
 });

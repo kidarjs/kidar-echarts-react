@@ -1,40 +1,32 @@
 import React, { useEffect, useRef } from 'react'
 import * as echarts from 'echarts'
-import { EchartsPlugin, Column, BaseData } from 'kidar-echarts-plugins/helper'
+import { EchartsPlugin, KidarEchartsContext } from 'kidar-echarts-plugins/helper'
 
 import { removeListenElResize, listenElResize } from 'nkxrb-tools'
 
-type Context = {
-  col: Column,
-  item: BaseData,
-  type: string
-}
-
 type Prop = {
-  style: Object
-  type: string
-  data: BaseData[],
-  cols?: Column[],
-  theme?: string
-  tooltip?: (params: Context) => string,
-  click?: (params: unknown) => void
-}
+  style?: Object
+  className?: string
+} & Omits<KidarEchartsContext, 'init'>
 
 const __DEV__ = process.env.NODE_ENV === 'development'
 const PLUGINS: Map<string, EchartsPlugin> = new Map()
 
 const KidarEcharts = React.memo<Prop>(prop => {
-  const { style, type, cols, data, theme, tooltip, click } = prop
+  const { className, style, type, cols, data, theme, click } = prop
   const KidarEchartsEl = useRef(null);
   let chart: echarts.ECharts | null = null
   const init = () => {
-    chart = echarts.init(KidarEchartsEl.current, theme)
-
+    chart = echarts.getInstanceByDom(KidarEchartsEl.current) || echarts.init(KidarEchartsEl.current, theme)
+    ctx.chart = chart
+    chart.setOption({}, false) // 初始化主题中默认的配置，确保chart.getOption()可以获取到值
     listenElResize(KidarEchartsEl.current, () => {
       resetOption()
       chart && chart.resize()
     })
   }
+
+  const ctx = { ...prop, chart, init }
 
   const resetOption = () => {
     if (!PLUGINS.has(type)) {
@@ -42,7 +34,7 @@ const KidarEcharts = React.memo<Prop>(prop => {
       return
     }
 
-    const option = PLUGINS.get(type).resetOption(cols, data, { ...prop, chart, init })
+    const option = PLUGINS.get(type).resetOption(cols, data, ctx)
     if (option) {
       chart.setOption(option, true)
     }
@@ -53,8 +45,9 @@ const KidarEcharts = React.memo<Prop>(prop => {
     resetOption()
     return () => {
       removeListenElResize(KidarEchartsEl.current)
+      chart.dispose()
     }
-  }, [type, cols, data, tooltip])
+  }, [type, cols, data])
 
   useEffect(() => {
     chart.dispose()
@@ -62,12 +55,12 @@ const KidarEcharts = React.memo<Prop>(prop => {
   }, [theme])
 
   useEffect(() => {
-    chart.on('click', params => click(params))
+    click ? chart.on('click', params => click(params), ctx) : chart.off('click')
   }, [click])
 
 
   return (
-    <div ref={KidarEchartsEl} style={{ ...style, overflow: 'hidden' }}></div>
+    <div ref={KidarEchartsEl} className={className} style={{ ...style, overflow: 'hidden' }}></div>
   )
 })
 

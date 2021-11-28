@@ -7,7 +7,7 @@ import { removeListenElResize, listenElResize } from 'nkxrb-tools'
 type Prop = {
   style?: Object
   className?: string
-} & Omits<KidarEchartsContext, 'init'>
+} & Omit<KidarEchartsContext, 'init' | 'chart'>
 
 const __DEV__ = process.env.NODE_ENV === 'development'
 const PLUGINS: Map<string, EchartsPlugin> = new Map()
@@ -30,7 +30,11 @@ const KidarEcharts = React.memo<Prop>(prop => {
 
   const resetOption = () => {
     if (!PLUGINS.has(type)) {
-      __DEV__ && console.warn(`it's not exist ${type} plugin, you can try [ npm i kidar-echarts-plugins or custom plugins]`)
+      if (__DEV__) {
+        throw new Error(`there is not exist ${type} plugin, you can try [ npm i kidar-echarts-plugins or custom plugins ]。
+          yon can see：https://github.com/kidarjs/kidar-echarts
+        `)
+      }
       return
     }
 
@@ -60,7 +64,9 @@ const KidarEcharts = React.memo<Prop>(prop => {
 
 
   return (
-    <div ref={KidarEchartsEl} className={className} style={{ ...style, overflow: 'hidden' }}></div>
+    <div style={{ overflow: 'hidden', width: '100%', height: '100%' }}>
+      <div ref={KidarEchartsEl} className={className} style={style}></div>
+    </div>
   )
 })
 
